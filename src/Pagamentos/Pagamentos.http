@@ -1,5 +1,9 @@
 @Pagamentos_HostAddress = http://localhost:5200
 
+### Verificar saúde do serviço e do banco
+GET {{Pagamentos_HostAddress}}/health
+Accept: application/json
+
 ### Registrar pagamento aprovado
 POST {{Pagamentos_HostAddress}}/api/pagamentos
 Content-Type: application/json
