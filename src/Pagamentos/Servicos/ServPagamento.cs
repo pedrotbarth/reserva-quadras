@@ -1,15 +1,28 @@
 using Pagamentos.DTO;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace Pagamentos.Servicos;
 
 public class ServPagamento(DataContext banco)
 {
+    // Código de erro do SQLite para violação de restrição (aqui, o índice único de ReservaId).
+    private const int ErroRestricaoSqlite = 19;
+
     public async Task<Pagamento> RegistrarAsync(CriarPagamentoDto dados)
     {
+        var reservaId = dados.ReservaId.GetValueOrDefault();
+
+        var jaPaga = await banco.Pagamentos.AnyAsync(pagamento =>
+            pagamento.ReservaId == reservaId &&
+            pagamento.Status == StatusPagamento.Aprovado);
+
+        if (jaPaga)
+            throw new PagamentoDuplicadoException(reservaId);
+
         var pagamento = new Pagamento
         {
-            ReservaId = dados.ReservaId.GetValueOrDefault(),
+            ReservaId = reservaId,
             Valor = dados.Valor,
             FormaPagamento = dados.FormaPagamento.GetValueOrDefault(),
             Status = dados.SimularRecusa ? StatusPagamento.Recusado : StatusPagamento.Aprovado,
@@ -18,7 +31,17 @@ public class ServPagamento(DataContext banco)
         };
 
         banco.Pagamentos.Add(pagamento);
-        await banco.SaveChangesAsync();
+
+        try
+        {
+            await banco.SaveChangesAsync();
+        }
+        catch (DbUpdateException erro) when (erro.InnerException is SqliteException { SqliteErrorCode: ErroRestricaoSqlite })
+        {
+            // Dois pedidos ao mesmo tempo passaram pela checagem acima; o índice do banco barrou o segundo.
+            throw new PagamentoDuplicadoException(reservaId);
+        }
+
         return pagamento;
     }
 

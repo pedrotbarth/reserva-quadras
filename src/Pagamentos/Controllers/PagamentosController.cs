@@ -11,8 +11,18 @@ public class PagamentosController(ServPagamento servico) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Pagamento>> Registrar(CriarPagamentoDto dados)
     {
-        var pagamento = await servico.RegistrarAsync(dados);
-        return CreatedAtAction(nameof(BuscarPorId), new { id = pagamento.Id }, pagamento);
+        try
+        {
+            var pagamento = await servico.RegistrarAsync(dados);
+            return CreatedAtAction(nameof(BuscarPorId), new { id = pagamento.Id }, pagamento);
+        }
+        catch (PagamentoDuplicadoException erro)
+        {
+            return Problem(
+                title: "Pagamento duplicado.",
+                detail: erro.Message,
+                statusCode: StatusCodes.Status409Conflict);
+        }
     }
 
     [HttpGet("{id:guid}")]
