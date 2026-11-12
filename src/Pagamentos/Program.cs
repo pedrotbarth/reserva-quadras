@@ -37,14 +37,21 @@ builder.Services.AddHttpClient<ClienteReservas>(cliente =>
 
 var app = builder.Build();
 
+// Cria ou atualiza a tabela ao subir. No Render o banco pode começar vazio a cada reinício.
+using (var escopo = app.Services.CreateScope())
+{
+    escopo.ServiceProvider.GetRequiredService<DataContext>().Database.Migrate();
+}
+
 app.UseMiddleware<CorrelacaoMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-}
 
-app.UseHttpsRedirection();
+    // No Render o HTTPS é feito antes de chegar ao serviço, que recebe HTTP.
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 
