@@ -16,12 +16,9 @@ public class PagamentosController(ServPagamento servico) : ControllerBase
             var pagamento = await servico.RegistrarAsync(dados);
             return CreatedAtAction(nameof(BuscarPorId), new { id = pagamento.Id }, pagamento);
         }
-        catch (PagamentoDuplicadoException erro)
+        catch (ErroPagamentoException erro)
         {
-            return Problem(
-                title: "Pagamento duplicado.",
-                detail: erro.Message,
-                statusCode: StatusCodes.Status409Conflict);
+            return Erro(erro);
         }
     }
 
@@ -40,5 +37,28 @@ public class PagamentosController(ServPagamento servico) : ControllerBase
     public async Task<ActionResult<List<Pagamento>>> Listar()
     {
         return Ok(await servico.ListarAsync());
+    }
+
+    [HttpPost("{id:guid}/confirmar-reserva")]
+    public async Task<ActionResult<Pagamento>> ConfirmarReserva(Guid id)
+    {
+        try
+        {
+            var pagamento = await servico.ConfirmarReservaAsync(id);
+
+            if (pagamento is null)
+                return NotFound();
+
+            return Ok(pagamento);
+        }
+        catch (ErroPagamentoException erro)
+        {
+            return Erro(erro);
+        }
+    }
+
+    private ObjectResult Erro(ErroPagamentoException erro)
+    {
+        return Problem(title: erro.Titulo, detail: erro.Message, statusCode: erro.StatusCode);
     }
 }

@@ -22,6 +22,19 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 builder.Services.AddScoped<ServPagamento>();
 
+builder.Services.AddHttpContextAccessor();
+
+// A URL de Reservas muda no Render: vem do appsettings ou da variável de ambiente Reservas__UrlBase.
+var urlReservas = builder.Configuration["Reservas:UrlBase"]
+    ?? throw new InvalidOperationException("URL do serviço de Reservas não configurada.");
+var tempoLimiteReservas = builder.Configuration.GetValue("Reservas:TempoLimiteSegundos", 30);
+
+builder.Services.AddHttpClient<ClienteReservas>(cliente =>
+{
+    cliente.BaseAddress = new Uri(urlReservas.TrimEnd('/') + "/");
+    cliente.Timeout = TimeSpan.FromSeconds(tempoLimiteReservas);
+});
+
 var app = builder.Build();
 
 app.UseMiddleware<CorrelacaoMiddleware>();
