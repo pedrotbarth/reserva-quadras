@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Tira dos logs os ids técnicos de rastreamento (SpanId, TraceId); usamos o nosso CorrelationId.
+builder.Logging.Configure(options => options.ActivityTrackingOptions = ActivityTrackingOptions.None);
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.Converters.Add(
@@ -20,6 +23,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 builder.Services.AddScoped<ServPagamento>();
 
 var app = builder.Build();
+
+app.UseMiddleware<CorrelacaoMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
