@@ -1,0 +1,19 @@
+@url = http://localhost:5103
+
+### Health check
+GET {{url}}/health
+
+### Listar reservas
+GET {{url}}/api/reservas
+
+### Criar reserva (substitua os dois IDs)
+POST {{url}}/api/reservas
+Content-Type: application/json
+
+{
+  "clienteId": "00000000-0000-0000-0000-000000000000",
+  "quadraId": "00000000-0000-0000-0000-000000000000",
+  "data": "2026-11-27",
+  "horarioInicio": "19:00:00",
+  "horarioFim": "20:00:00"
+}
