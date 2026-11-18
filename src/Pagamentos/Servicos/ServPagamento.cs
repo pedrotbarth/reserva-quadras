@@ -1,4 +1,4 @@
-using Pagamentos.DTO;
+﻿using Pagamentos.DTO;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +6,7 @@ namespace Pagamentos.Servicos;
 
 public class ServPagamento(DataContext banco, ClienteReservas reservas, ILogger<ServPagamento> logger)
 {
-    // Código de erro do SQLite para violação de restrição (aqui, o índice único de ReservaId).
+    // CÃ³digo de erro do SQLite para violaÃ§Ã£o de restriÃ§Ã£o (aqui, o Ã­ndice Ãºnico de ReservaId).
     private const int ErroRestricaoSqlite = 19;
 
     public async Task<Pagamento> RegistrarAsync(CriarPagamentoDto dados)
@@ -19,7 +19,7 @@ public class ServPagamento(DataContext banco, ClienteReservas reservas, ILogger<
 
         if (jaPaga)
         {
-            logger.LogWarning("Pagamento recusado por duplicidade: a reserva {ReservaId} já está paga", reservaId);
+            logger.LogWarning("Pagamento recusado por duplicidade: a reserva {ReservaId} jÃ¡ estÃ¡ paga", reservaId);
             throw new PagamentoDuplicadoException(reservaId);
         }
 
@@ -44,8 +44,8 @@ public class ServPagamento(DataContext banco, ClienteReservas reservas, ILogger<
         }
         catch (DbUpdateException erro) when (erro.InnerException is SqliteException { SqliteErrorCode: ErroRestricaoSqlite })
         {
-            // Dois pedidos ao mesmo tempo passaram pela checagem acima; o índice do banco barrou o segundo.
-            logger.LogWarning("Pagamento recusado por duplicidade (pedidos simultâneos): a reserva {ReservaId} já está paga", reservaId);
+            // Dois pedidos ao mesmo tempo passaram pela checagem acima; o Ã­ndice do banco barrou o segundo.
+            logger.LogWarning("Pagamento recusado por duplicidade (pedidos simultÃ¢neos): a reserva {ReservaId} jÃ¡ estÃ¡ paga", reservaId);
             throw new PagamentoDuplicadoException(reservaId);
         }
 
@@ -71,8 +71,8 @@ public class ServPagamento(DataContext banco, ClienteReservas reservas, ILogger<
         {
             throw new ErroPagamentoException(
                 StatusCodes.Status409Conflict,
-                "Pagamento não aprovado.",
-                "Só um pagamento aprovado pode confirmar a reserva.");
+                "Pagamento nÃ£o aprovado.",
+                "SÃ³ um pagamento aprovado pode confirmar a reserva.");
         }
 
         if (!pagamento.ReservaConfirmada)
@@ -104,35 +104,35 @@ public class ServPagamento(DataContext banco, ClienteReservas reservas, ILogger<
 
         if (reserva is null)
         {
-            logger.LogWarning("Pagamento recusado: a reserva {ReservaId} não existe", reservaId);
+            logger.LogWarning("Pagamento recusado: a reserva {ReservaId} nÃ£o existe", reservaId);
             throw new ErroPagamentoException(
                 StatusCodes.Status404NotFound,
-                "Reserva não encontrada.",
-                $"A reserva {reservaId} não existe.");
+                "Reserva nÃ£o encontrada.",
+                $"A reserva {reservaId} nÃ£o existe.");
         }
 
         if (reserva.Status != ClienteReservas.StatusAguardandoPagamento)
         {
-            logger.LogWarning("Pagamento recusado: a reserva {ReservaId} está com status {Status}", reservaId, reserva.Status);
+            logger.LogWarning("Pagamento recusado: a reserva {ReservaId} estÃ¡ com status {Status}", reservaId, reserva.Status);
             throw new ErroPagamentoException(
                 StatusCodes.Status409Conflict,
-                "Reserva não está aguardando pagamento.",
-                $"A reserva {reservaId} está com status {reserva.Status}.");
+                "Reserva nÃ£o estÃ¡ aguardando pagamento.",
+                $"A reserva {reservaId} estÃ¡ com status {reserva.Status}.");
         }
 
-        if (reserva.Valor != valor)
+        if (reserva.ValorTotal != valor)
         {
-            logger.LogWarning("Pagamento recusado: valor {Valor} diferente do valor {ValorReserva} da reserva {ReservaId}", valor, reserva.Valor, reservaId);
+            logger.LogWarning("Pagamento recusado: valor {Valor} diferente do valor {ValorReserva} da reserva {ReservaId}", valor, reserva.ValorTotal, reservaId);
             throw new ErroPagamentoException(
                 StatusCodes.Status400BadRequest,
                 "Valor diferente do da reserva.",
-                $"O valor da reserva é {reserva.Valor:F2}, mas foi informado {valor:F2}.");
+                $"O valor da reserva Ã© {reserva.ValorTotal:F2}, mas foi informado {valor:F2}.");
         }
     }
 
     private async Task ConfirmarNaReservaAsync(Pagamento pagamento)
     {
-        if (await reservas.ConfirmarAsync(pagamento.ReservaId))
+        if (await reservas.ConfirmarAsync(pagamento.ReservaId, pagamento.Id))
         {
             pagamento.ReservaConfirmada = true;
             await banco.SaveChangesAsync();
@@ -141,8 +141,9 @@ public class ServPagamento(DataContext banco, ClienteReservas reservas, ILogger<
         else
         {
             logger.LogWarning(
-                "Reserva {ReservaId} não foi confirmada; o pagamento {PagamentoId} ficou pendente de confirmação",
+                "Reserva {ReservaId} nÃ£o foi confirmada; o pagamento {PagamentoId} ficou pendente de confirmaÃ§Ã£o",
                 pagamento.ReservaId, pagamento.Id);
         }
     }
 }
+
