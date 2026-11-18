@@ -15,14 +15,28 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<ServQuadra>();
+builder.Services.AddHealthChecks().AddCheck<SqliteHealthCheck>("sqlite");
+builder.Logging.AddSimpleConsole(options =>
+{
+    options.IncludeScopes = true;
+    options.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+    options.UseUtcTimestamp = true;
+});
+
 var app = builder.Build();
+
+using (var escopo = app.Services.CreateScope())
+{
+    await escopo.ServiceProvider.GetRequiredService<DataContext>().Database.MigrateAsync();
+}
+
+app.UseMiddleware<CorrelacaoMiddleware>();
+app.MapHealthChecks("/health");
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
