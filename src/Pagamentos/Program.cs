@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Pagamentos;
 using Pagamentos.Servicos;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,16 +46,10 @@ using (var escopo = app.Services.CreateScope())
 
 app.UseMiddleware<CorrelacaoMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-
-    // No Render o HTTPS é feito antes de chegar ao serviço, que recebe HTTP.
-    app.UseHttpsRedirection();
-}
-
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.Run();
