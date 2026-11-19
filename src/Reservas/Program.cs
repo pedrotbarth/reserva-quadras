@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Reservas;
 using Reservas.Servicos;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,9 +43,9 @@ using (var escopo = app.Services.CreateScope())
 }
 
 app.UseMiddleware<CorrelacaoMiddleware>();
-if (app.Environment.IsDevelopment())
-    app.MapOpenApi();
 
 app.MapHealthChecks("/health");
 app.MapControllers();
+app.MapOpenApi();
+app.MapScalarApiReference();
 app.Run();

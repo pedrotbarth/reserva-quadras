@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Quadras;
 using Quadras.Servicos;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,13 +34,10 @@ using (var escopo = app.Services.CreateScope())
 app.UseMiddleware<CorrelacaoMiddleware>();
 app.MapHealthChecks("/health");
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.Run();

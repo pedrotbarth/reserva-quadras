@@ -1,9 +1,9 @@
-using Clientes;
-using Microsoft.EntityFrameworkCore;
+﻿using Clientes;
 using Clientes.Servicos;
+using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -15,8 +15,8 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<ServCliente>();
-
 builder.Services.AddHealthChecks().AddCheck<SqliteHealthCheck>("sqlite");
+
 builder.Logging.AddSimpleConsole(options =>
 {
     options.IncludeScopes = true;
@@ -28,19 +28,16 @@ var app = builder.Build();
 
 using (var escopo = app.Services.CreateScope())
 {
-    await escopo.ServiceProvider.GetRequiredService<DataContext>().Database.MigrateAsync();
+    await escopo.ServiceProvider.GetRequiredService<DataContext>()
+        .Database.MigrateAsync();
 }
 
 app.UseMiddleware<CorrelacaoMiddleware>();
 app.MapHealthChecks("/health");
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapOpenApi();
+app.MapScalarApiReference();
 
 app.Run();
